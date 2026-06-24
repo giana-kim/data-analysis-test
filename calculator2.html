@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apple Style Scientific Calculator</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #f5f5f7;
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Pretendard", "Segoe UI", sans-serif;
+}
+
+.calculator {
+  width: 430px;
+  padding: 24px;
+  border-radius: 36px;
+
+  background: #1c1c1e;
+
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.title {
+  color: #8e8e93;
+  font-size: 14px;
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.display {
+  height: 110px;
+  padding: 16px 8px;
+
+  color: white;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+
+  overflow: hidden;
+}
+
+.mode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  color: #8e8e93;
+  font-size: 13px;
+
+  margin-bottom: 12px;
+  padding: 0 6px;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+button {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+
+  border: none;
+  border-radius: 50%;
+
+  font-size: 18px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    background 0.12s ease;
+}
+
+button:active {
+  transform: scale(0.94);
+  filter: brightness(1.18);
+}
+
+.btn-func {
+  background: #636366;
+  color: white;
+}
+
+.btn-gray {
+  background: #a5a5a5;
+  color: #111;
+}
+
+.btn-dark {
+  background: #333333;
+  color: white;
+}
+
+.btn-orange {
+  background: #ff9f0a;
+  color: white;
+}
+
+.btn-mode {
+  background: #2c2c2e;
+  color: #d1d1d6;
+  border: 1px solid #3a3a3c;
+}
+
+.zero {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  border-radius: 999px;
+  text-align: left;
+  padding-left: 26px;
+}
+
+@media (max-width: 480px) {
+  .calculator {
+    width: 94vw;
+    padding: 18px;
+    border-radius: 30px;
+  }
+
+  .display {
+    font-size: 40px;
+  }
+
+  button {
+    font-size: 15px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+  <div class="title">공학용 계산기</div>
+  <div class="display" id="display">0</div>
+
+  <div class="mode">
+    <span id="angleModeText">DEG 모드</span>
+    <span>Apple Style</span>
+  </div>
+
+  <div class="buttons">
+    <button class="btn-mode" onclick="toggleAngleMode()">DEG</button>
+    <button class="btn-func" onclick="scientific('sin')">sin</button>
+    <button class="btn-func" onclick="scientific('cos')">cos</button>
+    <button class="btn-func" onclick="scientific('tan')">tan</button>
+    <button class="btn-orange" onclick="setOperator('/')">÷</button>
+
+    <button class="btn-func" onclick="scientific('log')">log</button>
+    <button class="btn-func" onclick="scientific('ln')">ln</button>
+    <button class="btn-func" onclick="scientific('sqrt')">√</button>
+    <button class="btn-func" onclick="scientific('square')">x²</button>
+    <button class="btn-orange" onclick="setOperator('*')">×</button>
+
+    <button class="btn-func" onclick="inputConstant('pi')">π</button>
+    <button class="btn-func" onclick="inputConstant('e')">e</button>
+    <button class="btn-func" onclick="scientific('factorial')">x!</button>
+    <button class="btn-func" onclick="setOperator('power')">xʸ</button>
+    <button class="btn-orange" onclick="setOperator('-')">−</button>
+
+    <button class="btn-gray" onclick="clearDisplay()">AC</button>
+    <button class="btn-gray" onclick="backspace()">⌫</button>
+    <button class="btn-gray" onclick="toggleSign()">±</button>
+    <button class="btn-gray" onclick="percent()">%</button>
+    <button class="btn-orange" onclick="setOperator('+')">+</button>
+
+    <button class="btn-dark" onclick="inputNumber('7')">7</button>
+    <button class="btn-dark" onclick="inputNumber('8')">8</button>
+    <button class="btn-dark" onclick="inputNumber('9')">9</button>
+    <button class="btn-func" onclick="scientific('reciprocal')">1/x</button>
+    <button class="btn-orange" onclick="calculate()">=</button>
+
+    <button class="btn-dark" onclick="inputNumber('4')">4</button>
+    <button class="btn-dark" onclick="inputNumber('5')">5</button>
+    <button class="btn-dark" onclick="inputNumber('6')">6</button>
+    <button class="btn-func" onclick="scientific('cube')">x³</button>
+    <button class="btn-func" onclick="scientific('cuberoot')">∛x</button>
+
+    <button class="btn-dark" onclick="inputNumber('1')">1</button>
+    <button class="btn-dark" onclick="inputNumber('2')">2</button>
+    <button class="btn-dark" onclick="inputNumber('3')">3</button>
+    <button class="btn-func" onclick="scientific('exp')">eˣ</button>
+    <button class="btn-func" onclick="scientific('tenPower')">10ˣ</button>
+
+    <button class="btn-dark zero" onclick="inputNumber('0')">0</button>
+    <button class="btn-dark" onclick="inputDecimal()">.</button>
+    <button class="btn-func" onclick="scientific('abs')">|x|</button>
+    <button class="btn-func" onclick="scientific('random')">rand</button>
+  </div>
+</div>
+
+<script>
+let currentValue = "0";
+let previousValue = null;
+let operator = null;
+let shouldResetDisplay = false;
+let angleMode = "DEG";
+
+const display = document.getElementById("display");
+const angleModeText = document.getElementById("angleModeText");
+
+function updateDisplay() {
+  display.textContent = currentValue;
+}
+
+function formatNumber(number) {
+  if (!isFinite(number)) return "오류";
+
+  const rounded = Number(number.toFixed(10));
+
+  if (String(rounded).length > 12) {
+    return rounded.toExponential(6);
+  }
+
+  return String(rounded);
+}
+
+function inputNumber(number) {
+  if (currentValue === "오류") {
+    currentValue = "0";
+  }
+
+  if (currentValue === "0" || shouldResetDisplay) {
+    currentValue = String(number);
+    shouldResetDisplay = false;
+  } else {
+    currentValue += String(number);
+  }
+
+  updateDisplay();
+}
+
+function inputDecimal() {
+  if (currentValue === "오류") {
+    currentValue = "0";
+  }
+
+  if (shouldResetDisplay) {
+    currentValue = "0";
+    shouldResetDisplay = false;
+  }
+
+  if (!currentValue.includes(".")) {
+    currentValue += ".";
+  }
+
+  updateDisplay();
+}
+
+function clearDisplay() {
+  currentValue = "0";
+  previousValue = null;
+  operator = null;
+  shouldResetDisplay = false;
+  updateDisplay();
+}
+
+function backspace() {
+  if (
+    currentValue === "오류" ||
+    currentValue.length === 1
+  ) {
+    currentValue = "0";
+  } else {
+    currentValue = currentValue.slice(0, -1);
+  }
+
+  updateDisplay();
+}
+
+function toggleSign() {
+  if (currentValue === "0" || currentValue === "오류") return;
+
+  currentValue = formatNumber(parseFloat(currentValue) * -1);
+  updateDisplay();
+}
+
+function percent() {
+  if (currentValue === "오류") return;
+
+  currentValue = formatNumber(parseFloat(currentValue) / 100);
+  updateDisplay();
+}
+
+function setOperator(selectedOperator) {
+  if (currentValue === "오류") return;
+
+  if (operator !== null && !shouldResetDisplay) {
+    calculate();
+  }
+
+  previousValue = currentValue;
+  operator = selectedOperator;
+  shouldResetDisplay = true;
+}
+
+function calculate() {
+  if (
+    operator === null ||
+    previousValue === null ||
+    currentValue === "오류"
+  ) return;
+
+  const prev = parseFloat(previousValue);
+  const current = parseFloat(currentValue);
+
+  let result;
+
+  if (operator === "+") result = prev + current;
+  if (operator === "-") result = prev - current;
+  if (operator === "*") result = prev * current;
+
+  if (operator === "/") {
+    if (current === 0) {
+      currentValue = "오류";
+      previousValue = null;
+      operator = null;
+      shouldResetDisplay = true;
+      updateDisplay();
+      return;
+    }
+
+    result = prev / current;
+  }
+
+  if (operator === "power") {
+    result = Math.pow(prev, current);
+  }
+
+  currentValue = formatNumber(result);
+  previousValue = null;
+  operator = null;
+  shouldResetDisplay = true;
+
+  updateDisplay();
+}
+
+function scientific(type) {
+  if (currentValue === "오류") return;
+
+  const value = parseFloat(currentValue);
+  let result;
+
+  if (type === "sin") {
+    result = Math.sin(toRadian(value));
+  }
+
+  if (type === "cos") {
+    result = Math.cos(toRadian(value));
+  }
+
+  if (type === "tan") {
+    result = Math.tan(toRadian(value));
+  }
+
+  if (type === "log") {
+    if (value <= 0) return showError();
+    result = Math.log10(value);
+  }
+
+  if (type === "ln") {
+    if (value <= 0) return showError();
+    result = Math.log(value);
+  }
+
+  if (type === "sqrt") {
+    if (value < 0) return showError();
+    result = Math.sqrt(value);
+  }
+
+  if (type === "square") {
+    result = value * value;
+  }
+
+  if (type === "cube") {
+    result = value * value * value;
+  }
+
+  if (type === "cuberoot") {
+    result = Math.cbrt(value);
+  }
+
+  if (type === "reciprocal") {
+    if (value === 0) return showError();
+    result = 1 / value;
+  }
+
+  if (type === "exp") {
+    result = Math.exp(value);
+  }
+
+  if (type === "tenPower") {
+    result = Math.pow(10, value);
+  }
+
+  if (type === "abs") {
+    result = Math.abs(value);
+  }
+
+  if (type === "random") {
+    result = Math.random();
+  }
+
+  if (type === "factorial") {
+    if (
+      value < 0 ||
+      !Number.isInteger(value) ||
+      value > 170
+    ) {
+      return showError();
+    }
+
+    result = factorial(value);
+  }
+
+  currentValue = formatNumber(result);
+  shouldResetDisplay = true;
+  updateDisplay();
+}
+
+function factorial(n) {
+  let result = 1;
+
+  for (let i = 2; i <= n; i++) {
+    result *= i;
+  }
+
+  return result;
+}
+
+function inputConstant(type) {
+  if (type === "pi") {
+    currentValue = formatNumber(Math.PI);
+  }
+
+  if (type === "e") {
+    currentValue = formatNumber(Math.E);
+  }
+
+  shouldResetDisplay = true;
+  updateDisplay();
+}
+
+function toggleAngleMode() {
+  angleMode = angleMode === "DEG" ? "RAD" : "DEG";
+
+  angleModeText.textContent = `${angleMode} 모드`;
+
+  const modeButton =
+    document.querySelector(".btn-mode");
+
+  modeButton.textContent = angleMode;
+}
+
+function toRadian(value) {
+  if (angleMode === "DEG") {
+    return value * Math.PI / 180;
+  }
+
+  return value;
+}
+
+function showError() {
+  currentValue = "오류";
+  previousValue = null;
+  operator = null;
+  shouldResetDisplay = true;
+  updateDisplay();
+}
+
+updateDisplay();
+</script>
+
+</body>
+</html>
