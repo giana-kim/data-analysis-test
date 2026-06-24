@@ -1,0 +1,577 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출석체크 애플리케이션</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Pretendard", "Segoe UI", sans-serif;
+
+  background: #f7f7f8;
+  color: #2c2c2e;
+
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.app {
+  max-width: 1000px;
+  margin: auto;
+
+  background: rgba(255,255,255,0.92);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.04),
+    0 1px 3px rgba(0,0,0,0.05);
+
+  padding: 32px;
+}
+
+h1 {
+  text-align: center;
+
+  font-size: 32px;
+  font-weight: 600;
+
+  color: #1d1d1f;
+
+  letter-spacing: -0.03em;
+  margin-bottom: 30px;
+}
+
+.top,
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+input,
+select {
+  flex: 1;
+
+  background: #fafafa;
+
+  border: 1px solid #e5e5e7;
+
+  border-radius: 12px;
+
+  padding: 12px 14px;
+
+  font-size: 15px;
+
+  transition: all 0.2s ease;
+}
+
+input:focus,
+select:focus {
+  border-color: #c7d2fe;
+
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.08);
+
+  outline: none;
+}
+
+button {
+  background: #f2f4f7;
+
+  color: #374151;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 12px;
+
+  font-weight: 500;
+
+  padding: 12px 16px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: #e9edf3;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.primary-btn {
+  background: #5b7cfa;
+  color: white;
+  border: none;
+}
+
+.primary-btn:hover {
+  background: #4f6df0;
+}
+
+.delete-btn {
+  background: #fff5f5;
+  color: #d9485f;
+  border: 1px solid #ffd6dd;
+}
+
+.delete-btn:hover {
+  background: #ffecef;
+}
+
+.export-btn {
+  background: #eefbf3;
+  color: #2d8a5b;
+  border: 1px solid #d7f3e2;
+}
+
+.export-btn:hover {
+  background: #e4f7ec;
+}
+
+table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+th {
+  color: #6e6e73;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+}
+
+td {
+  background: white;
+
+  padding: 14px;
+  text-align: center;
+
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+td:first-child {
+  border-left: 1px solid #f0f0f0;
+  border-radius: 16px 0 0 16px;
+}
+
+td:last-child {
+  border-right: 1px solid #f0f0f0;
+  border-radius: 0 16px 16px 0;
+}
+
+.present {
+  color: #2d8a5b;
+  font-weight: 700;
+}
+
+.late {
+  color: #c58a20;
+  font-weight: 700;
+}
+
+.early {
+  color: #4a7bbf;
+  font-weight: 700;
+}
+
+.absent {
+  color: #d05c72;
+  font-weight: 700;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+
+  margin-top: 24px;
+}
+
+.card {
+  background: #fafafa;
+
+  border: 1px solid #ececec;
+
+  border-radius: 18px;
+
+  padding: 18px;
+
+  text-align: center;
+
+  font-weight: 600;
+  color: #444;
+
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.empty {
+  text-align: center;
+  color: #86868b;
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+
+  .summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .top,
+  .controls {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <h1>출석체크</h1>
+
+  <div class="top">
+    <input type="date" id="dateInput">
+    <input type="text" id="nameInput" placeholder="학생 이름 입력">
+    <button class="primary-btn" onclick="addStudent()">
+      학생 추가
+    </button>
+  </div>
+
+  <div class="controls">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="학생 검색"
+      oninput="renderStudents()">
+
+    <button class="export-btn" onclick="downloadCSV()">
+      CSV 다운로드
+    </button>
+
+    <button class="delete-btn" onclick="resetToday()">
+      오늘 기록 초기화
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>이름</th>
+        <th>상태</th>
+        <th>출석 변경</th>
+        <th>삭제</th>
+      </tr>
+    </thead>
+    <tbody id="studentList"></tbody>
+  </table>
+
+  <div class="summary">
+    <div class="card" id="totalCount">전체 0명</div>
+    <div class="card" id="presentCount">출석 0명</div>
+    <div class="card" id="lateCount">지각 0명</div>
+    <div class="card" id="earlyCount">조퇴 0명</div>
+    <div class="card" id="absentCount">결석 0명</div>
+  </div>
+
+</div>
+
+<script>
+
+let students =
+  JSON.parse(localStorage.getItem("students")) || [];
+
+const dateInput =
+  document.getElementById("dateInput");
+
+dateInput.value =
+  new Date().toISOString().split("T")[0];
+
+function saveData() {
+  localStorage.setItem(
+    "students",
+    JSON.stringify(students)
+  );
+}
+
+function getToday() {
+  return dateInput.value;
+}
+
+function addStudent() {
+
+  const input =
+    document.getElementById("nameInput");
+
+  const name =
+    input.value.trim();
+
+  if (!name) {
+    alert("학생 이름을 입력하세요.");
+    return;
+  }
+
+  if (
+    students.some(
+      student => student.name === name
+    )
+  ) {
+    alert("이미 등록된 학생입니다.");
+    return;
+  }
+
+  students.push({
+    name,
+    records: {}
+  });
+
+  input.value = "";
+
+  saveData();
+  renderStudents();
+}
+
+function changeStatus(index, status) {
+
+  const date = getToday();
+
+  students[index].records[date] = status;
+
+  saveData();
+  renderStudents();
+}
+
+function deleteStudent(index) {
+
+  if (confirm("학생을 삭제하시겠습니까?")) {
+
+    students.splice(index, 1);
+
+    saveData();
+    renderStudents();
+  }
+}
+
+function resetToday() {
+
+  const date = getToday();
+
+  if (
+    confirm(`${date} 기록을 초기화할까요?`)
+  ) {
+
+    students.forEach(student => {
+      delete student.records[date];
+    });
+
+    saveData();
+    renderStudents();
+  }
+}
+
+function renderStudents() {
+
+  const tbody =
+    document.getElementById("studentList");
+
+  const search =
+    document.getElementById("searchInput")
+    .value
+    .trim();
+
+  const date = getToday();
+
+  tbody.innerHTML = "";
+
+  const filtered =
+    students.filter(student =>
+      student.name.includes(search)
+    );
+
+  if (filtered.length === 0) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty">
+          등록된 학생이 없습니다.
+        </td>
+      </tr>
+    `;
+
+    updateSummary();
+    return;
+  }
+
+  filtered.forEach((student, idx) => {
+
+    const realIndex =
+      students.indexOf(student);
+
+    const status =
+      student.records[date] || "결석";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${student.name}</td>
+
+        <td class="${getStatusClass(status)}">
+          ${status}
+        </td>
+
+        <td>
+          <button onclick="changeStatus(${realIndex}, '출석')">
+            출석
+          </button>
+
+          <button onclick="changeStatus(${realIndex}, '지각')">
+            지각
+          </button>
+
+          <button onclick="changeStatus(${realIndex}, '조퇴')">
+            조퇴
+          </button>
+
+          <button class="delete-btn"
+            onclick="changeStatus(${realIndex}, '결석')">
+            결석
+          </button>
+        </td>
+
+        <td>
+          <button class="delete-btn"
+            onclick="deleteStudent(${realIndex})">
+            삭제
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  updateSummary();
+}
+
+function getStatusClass(status) {
+
+  if (status === "출석") return "present";
+  if (status === "지각") return "late";
+  if (status === "조퇴") return "early";
+
+  return "absent";
+}
+
+function updateSummary() {
+
+  const date = getToday();
+
+  const total = students.length;
+
+  const present =
+    students.filter(
+      s => s.records[date] === "출석"
+    ).length;
+
+  const late =
+    students.filter(
+      s => s.records[date] === "지각"
+    ).length;
+
+  const early =
+    students.filter(
+      s => s.records[date] === "조퇴"
+    ).length;
+
+  const absent =
+    total - present - late - early;
+
+  document.getElementById("totalCount")
+    .textContent = `전체 ${total}명`;
+
+  document.getElementById("presentCount")
+    .textContent = `출석 ${present}명`;
+
+  document.getElementById("lateCount")
+    .textContent = `지각 ${late}명`;
+
+  document.getElementById("earlyCount")
+    .textContent = `조퇴 ${early}명`;
+
+  document.getElementById("absentCount")
+    .textContent = `결석 ${absent}명`;
+}
+
+function downloadCSV() {
+
+  const date = getToday();
+
+  let csv =
+    "번호,이름,날짜,상태\n";
+
+  students.forEach((student, index) => {
+
+    const status =
+      student.records[date] || "결석";
+
+    csv +=
+      `${index + 1},${student.name},${date},${status}\n`;
+  });
+
+  const blob = new Blob(
+    ["\uFEFF" + csv],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const link =
+    document.createElement("a");
+
+  link.href =
+    URL.createObjectURL(blob);
+
+  link.download =
+    `출석기록_${date}.csv`;
+
+  link.click();
+}
+
+dateInput.addEventListener(
+  "change",
+  renderStudents
+);
+
+renderStudents();
+
+</script>
+
+</body>
+</html>
+```

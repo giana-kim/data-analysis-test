@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>대한민국 선박 루트 3D 시뮬레이터</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+  background: #020814;
+  color: white;
+}
+
+#globe {
+  width: 100vw;
+  height: 100vh;
+}
+
+.panel {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  width: 340px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(5, 20, 38, 0.75);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(120, 190, 255, 0.25);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  z-index: 10;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(56,189,248,0.16);
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+h1 {
+  font-size: 26px;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+.desc {
+  font-size: 14px;
+  color: #b7d7ef;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.ship-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 12px;
+}
+
+.ship-name {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.ship-info {
+  font-size: 13px;
+  color: #bad7ea;
+  line-height: 1.5;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+}
+
+button.secondary {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+.legend {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(5,20,38,0.72);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(120,190,255,0.25);
+  z-index: 10;
+  font-size: 13px;
+  color: #cfe8fa;
+}
+
+.legend div {
+  margin: 8px 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.blue { background: #38bdf8; }
+.orange { background: #f59e0b; }
+.green { background: #22c55e; }
+
+.error-box {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 520px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(10, 20, 35, 0.92);
+  border: 1px solid rgba(255,255,255,0.15);
+  z-index: 99;
+  line-height: 1.7;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  70% { transform: scale(1.9); opacity: 0.25; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .panel {
+    width: calc(100vw - 32px);
+    left: 16px;
+    top: 16px;
+  }
+
+  .legend {
+    display: none;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="globe"></div>
+
+<div class="panel">
+  <div class="badge">KOREA MARITIME ROUTE</div>
+
+  <h1>대한민국 선박 항로<br>3D 시뮬레이터</h1>
+
+  <p class="desc">
+    3D 지구본 위에서 대한민국 주요 항만 출항 루트를 확인할 수 있습니다.
+  </p>
+
+  <div class="ship-card">
+    <div class="ship-name" id="selectedShip">HMM Nuri</div>
+    <div class="ship-info" id="shipInfo">
+      출항지: 부산항<br>
+      도착지: 싱가포르항<br>
+      상태: 운항 중
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="focusKorea()">대한민국 보기</button>
+    <button class="secondary" onclick="toggleRotation()">회전 ON/OFF</button>
+    <button onclick="zoomIn()">줌 인</button>
+    <button class="secondary" onclick="zoomOut()">줌 아웃</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div><span class="dot blue"></span>선박 위치</div>
+  <div><span class="dot orange"></span>출항 항만</div>
+  <div><span class="dot green"></span>도착 항만</div>
+</div>
+
+<div class="error-box" id="errorBox">
+  <b>3D 지구본을 불러오지 못했습니다.</b><br><br>
+  인터넷 연결 또는 CDN 접속이 필요합니다.<br>
+  학교/회사 네트워크에서 차단될 경우 다른 네트워크에서 실행해보세요.
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/globe.gl"></script>
+
+<script>
+window.addEventListener("load", function () {
+  if (typeof Globe === "undefined") {
+    document.getElementById("errorBox").style.display = "block";
+    return;
+  }
+
+  const ships = [
+    {
+      name: "HMM Nuri",
+      from: "부산항",
+      to: "싱가포르항",
+      status: "운항 중",
+      color: "#38bdf8",
+      route: [
+        { lat: 35.10, lng: 129.04, label: "부산항", type: "출항" },
+        { lat: 31.23, lng: 121.47, label: "상하이 인근 해역", type: "경유" },
+        { lat: 22.32, lng: 114.17, label: "홍콩 인근 해역", type: "경유" },
+        { lat: 1.29, lng: 103.85, label: "싱가포르항", type: "도착" }
+      ]
+    },
+    {
+      name: "Korea Blue Ocean",
+      from: "인천항",
+      to: "로스앤젤레스항",
+      status: "태평양 횡단",
+      color: "#60a5fa",
+      route: [
+        { lat: 37.45, lng: 126.60, label: "인천항", type: "출항" },
+        { lat: 35.68, lng: 139.76, label: "도쿄 인근 해역", type: "경유" },
+        { lat: 42.00, lng: 170.00, label: "북태평양", type: "경유" },
+        { lat: 34.05, lng: -118.24, label: "로스앤젤레스항", type: "도착" }
+      ]
+    },
+    {
+      name: "Mokpo Marine Star",
+      from: "목포항",
+      to: "제주항",
+      status: "국내 연안 운항",
+      color: "#22c55e",
+      route: [
+        { lat: 34.79, lng: 126.38, label: "목포항", type: "출항" },
+        { lat: 33.90, lng: 126.10, label: "남해 해역", type: "경유" },
+        { lat: 33.51, lng: 126.52, label: "제주항", type: "도착" }
+      ]
+    },
+    {
+      name: "Ulsan Energy Carrier",
+      from: "울산항",
+      to: "두바이항",
+      status: "에너지 물류 운항",
+      color: "#f59e0b",
+      route: [
+        { lat: 35.50, lng: 129.38, label: "울산항", type: "출항" },
+        { lat: 25.03, lng: 121.56, label: "대만 인근 해역", type: "경유" },
+        { lat: 6.92, lng: 79.86, label: "콜롬보 인근 해역", type: "경유" },
+        { lat: 25.20, lng: 55.27, label: "두바이항", type: "도착" }
+      ]
+    }
+  ];
+
+  const routeArcs = [];
+  const points = [];
+  const shipMarkers = [];
+
+  ships.forEach(ship => {
+    for (let i = 0; i < ship.route.length - 1; i++) {
+      routeArcs.push({
+        ship: ship.name,
+        startLat: ship.route[i].lat,
+        startLng: ship.route[i].lng,
+        endLat: ship.route[i + 1].lat,
+        endLng: ship.route[i + 1].lng,
+        color: ship.color
+      });
+    }
+
+    ship.route.forEach((p, index) => {
+      points.push({
+        ...p,
+        ship: ship.name,
+        color:
+          index === 0 ? "#f59e0b" :
+          index === ship.route.length - 1 ? "#22c55e" :
+          "#94a3b8"
+      });
+    });
+
+    shipMarkers.push({
+      ...ship.route[1],
+      ship: ship.name,
+      from: ship.from,
+      to: ship.to,
+      status: ship.status,
+      color: ship.color
+    });
+  });
+
+  const world = Globe()
+    .globeImageUrl("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg")
+    .bumpImageUrl("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png")
+    .backgroundImageUrl("https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png")
+
+    .showAtmosphere(true)
+    .atmosphereColor("#38bdf8")
+    .atmosphereAltitude(0.22)
+
+    .arcsData(routeArcs)
+    .arcStartLat(d => d.startLat)
+    .arcStartLng(d => d.startLng)
+    .arcEndLat(d => d.endLat)
+    .arcEndLng(d => d.endLng)
+    .arcColor(d => [d.color, "#ffffff", d.color])
+    .arcDashLength(0.45)
+    .arcDashGap(0.9)
+    .arcDashAnimateTime(2600)
+    .arcStroke(1.7)
+    .arcAltitude(0.28)
+
+    .pointsData(points)
+    .pointLat(d => d.lat)
+    .pointLng(d => d.lng)
+    .pointColor(d => d.color)
+    .pointAltitude(0.02)
+    .pointRadius(d => d.type === "출항" || d.type === "도착" ? 0.35 : 0.18)
+    .pointLabel(d => `
+      <b>${d.label}</b><br>
+      선박명: ${d.ship}<br>
+      구분: ${d.type}
+    `)
+
+    .htmlElementsData(shipMarkers)
+    .htmlLat(d => d.lat)
+    .htmlLng(d => d.lng)
+    .htmlElement(d => {
+      const el = document.createElement("div");
+
+      el.innerHTML = `
+        <div style="
+          transform: translate(-50%, -50%);
+          position: relative;
+          cursor: pointer;
+        ">
+          <div style="
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: ${d.color};
+            box-shadow: 0 0 22px ${d.color};
+            border: 3px solid white;
+            animation: pulse 1.5s infinite;
+          "></div>
+
+          <div style="
+            position: absolute;
+            top: -36px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(2, 8, 20, 0.82);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+          ">
+            🚢 ${d.ship}
+          </div>
+        </div>
+      `;
+
+      el.onclick = function () {
+        selectShip(d);
+      };
+
+      return el;
+    });
+
+  world(document.getElementById("globe"));
+
+  const controls = world.controls();
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.55;
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 180;
+  controls.maxDistance = 800;
+
+  world.camera().position.z = 420;
+
+  window.selectShip = function (ship) {
+    document.getElementById("selectedShip").textContent = ship.ship;
+
+    document.getElementById("shipInfo").innerHTML = `
+      출항지: ${ship.from}<br>
+      도착지: ${ship.to}<br>
+      상태: ${ship.status}
+    `;
+
+    world.pointOfView(
+      {
+        lat: ship.lat,
+        lng: ship.lng,
+        altitude: 1.4
+      },
+      1200
+    );
+  };
+
+  window.focusKorea = function () {
+    world.pointOfView(
+      {
+        lat: 36.2,
+        lng: 127.8,
+        altitude: 1.35
+      },
+      1400
+    );
+  };
+
+  window.zoomIn = function () {
+    const pov = world.pointOfView();
+
+    world.pointOfView(
+      {
+        lat: pov.lat,
+        lng: pov.lng,
+        altitude: Math.max(0.55, pov.altitude - 0.35)
+      },
+      700
+    );
+  };
+
+  window.zoomOut = function () {
+    const pov = world.pointOfView();
+
+    world.pointOfView(
+      {
+        lat: pov.lat,
+        lng: pov.lng,
+        altitude: Math.min(3.5, pov.altitude + 0.45)
+      },
+      700
+    );
+  };
+
+  window.toggleRotation = function () {
+    controls.autoRotate = !controls.autoRotate;
+  };
+
+  window.addEventListener("resize", function () {
+    world.width(window.innerWidth);
+    world.height(window.innerHeight);
+  });
+
+  focusKorea();
+});
+</script>
+
+</body>
+</html>
