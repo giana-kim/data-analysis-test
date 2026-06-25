@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rocky 대화 시뮬레이터</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 20%),
+    linear-gradient(135deg, #050816, #0b1026 55%, #111827);
+  font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.app {
+  width: 100%;
+  max-width: 520px;
+  height: 720px;
+  background: rgba(10, 18, 35, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 22px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.12);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.status {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.status span {
+  font-size: 12px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  color: #dbeafe;
+}
+
+.chat {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.message {
+  max-width: 82%;
+  padding: 13px 15px;
+  border-radius: 18px;
+  line-height: 1.5;
+  font-size: 14px;
+  animation: pop 0.18s ease;
+}
+
+.user {
+  align-self: flex-end;
+  background: #2563eb;
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.rocky {
+  align-self: flex-start;
+  background: #2a2418;
+  color: #fde68a;
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  border-bottom-left-radius: 6px;
+}
+
+.translation {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.music {
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.input-area {
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 13px 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255,255,255,0.08);
+  color: white;
+  outline: none;
+}
+
+input::placeholder {
+  color: #94a3b8;
+}
+
+button {
+  border: none;
+  border-radius: 16px;
+  padding: 0 18px;
+  background: #facc15;
+  color: #1f2937;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+.quick {
+  padding: 0 16px 14px;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick button {
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(250,204,21,0.12);
+  color: #fde68a;
+  border: 1px solid rgba(250,204,21,0.25);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="badge">PROJECT HAIL MARY FAN SIMULATOR</div>
+    <h1>Rocky 통신 모듈</h1>
+    <p class="subtitle">
+      인간 언어를 입력하면 Rocky가 음악 기호 언어와 번역문으로 응답합니다.
+    </p>
+
+    <div class="status">
+      <span>통신 상태: 안정</span>
+      <span>상대: Rocky</span>
+      <span>모드: 번역 보조</span>
+    </div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="message rocky">
+      <span class="music">♪ ♫ ♬ ♩ ♪</span>
+      <span class="translation">Rocky: 인간 친구, 들리는가?</span>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input
+      id="userInput"
+      type="text"
+      placeholder="예: 안녕 Rocky, 연료가 부족해, 도와줘"
+      onkeydown="handleKey(event)"
+    />
+    <button onclick="sendMessage()">전송</button>
+  </div>
+
+  <div class="quick">
+    <button onclick="quickSend('안녕 Rocky')">안녕</button>
+    <button onclick="quickSend('연료가 부족해')">연료 부족</button>
+    <button onclick="quickSend('지구를 구해야 해')">지구 구하기</button>
+    <button onclick="quickSend('도와줘')">도와줘</button>
+  </div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("userInput");
+
+const rockyDictionary = [
+  {
+    keywords: ["안녕", "hello", "hi", "반가워"],
+    music: "♪ ♫ ♪ ♬",
+    text: "Rocky: 인간 친구! 나도 반갑다!"
+  },
+  {
+    keywords: ["연료", "아스트로파지", "부족"],
+    music: "♬ ♩ ♩ ♫ ♯",
+    text: "Rocky: 연료 문제 심각하다. 하지만 해결 가능하다."
+  },
+  {
+    keywords: ["지구", "태양", "구해야"],
+    music: "♫ ♫ ♬ ♪ ♩",
+    text: "Rocky: 지구 중요하다. 에리드도 중요하다. 함께 해결한다."
+  },
+  {
+    keywords: ["도와", "help", "지원"],
+    music: "♩ ♪ ♬ ♬ ♫",
+    text: "Rocky: 당연히 돕는다. 친구는 돕는 존재다."
+  },
+  {
+    keywords: ["무서워", "위험", "문제"],
+    music: "♯ ♩ ♯ ♫",
+    text: "Rocky: 위험 있다. 그러나 계산하면 답 있다."
+  },
+  {
+    keywords: ["친구", "friend"],
+    music: "♪ ♪ ♫ ♬ ♪",
+    text: "Rocky: 친구는 좋은 단어다. 인간 친구."
+  },
+  {
+    keywords: ["고마워", "감사"],
+    music: "♬ ♪ ♫ ♪",
+    text: "Rocky: 감사 필요 없다. 친구라서 한다."
+  }
+];
+
+const fallbackResponses = [
+  {
+    music: "♪ ♩ ♫ ♬",
+    text: "Rocky: 번역이 조금 어렵다. 다시 말해줄 수 있나?"
+  },
+  {
+    music: "♬ ♫ ♩ ♪",
+    text: "Rocky: 인간 언어 복잡하다. 그러나 흥미롭다."
+  },
+  {
+    music: "♫ ♪ ♬ ♩",
+    text: "Rocky: 나는 생각 중이다. 문제를 나누어 보자."
+  }
+];
+
+function sendMessage() {
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  setTimeout(() => {
+    const response = getRockyResponse(text);
+    addRockyMessage(response.music, response.text);
+  }, 500);
+}
+
+function quickSend(text) {
+  input.value = text;
+  sendMessage();
+}
+
+function handleKey(event) {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
+}
+
+function addMessage(text, sender) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  msg.textContent = text;
+
+  chat.appendChild(msg);
+  scrollToBottom();
+}
+
+function addRockyMessage(music, translation) {
+  const msg = document.createElement("div");
+  msg.className = "message rocky";
+
+  msg.innerHTML = `
+    <span class="music">${music}</span>
+    <span class="translation">${translation}</span>
+  `;
+
+  chat.appendChild(msg);
+  scrollToBottom();
+}
+
+function getRockyResponse(userText) {
+  const normalized = userText.toLowerCase();
+
+  for (const item of rockyDictionary) {
+    const matched = item.keywords.some(keyword =>
+      normalized.includes(keyword.toLowerCase())
+    );
+
+    if (matched) {
+      return item;
+    }
+  }
+
+  return fallbackResponses[
+    Math.floor(Math.random() * fallbackResponses.length)
+  ];
+}
+
+function scrollToBottom() {
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>
