@@ -1,0 +1,23 @@
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;margin:0 auto;padding:1rem;max-width:880px;color:#222;background:#fff}
+header{position:sticky;top:0;background:#fff;padding:1rem 0;border-bottom:1px solid #ddd;z-index:1}
+h1{font-size:1.4rem;margin:0 0 .75rem}
+.bar{display:flex;align-items:center;gap:.75rem}
+input{padding:.55rem .7rem;font-size:1rem;flex:1;max-width:60%;border:1px solid #bbb;border-radius:6px}
+#count{color:#555;font-size:.95rem}
+.card{border:1px solid #e5e5e5;padding:1rem 1.1rem;margin:.75rem 0;border-radius:8px}
+.label{color:#06f;font-weight:600}
+.title{font-weight:700;font-size:1.1rem;margin:.25rem 0 .5rem}
+.body p{margin:.4rem 0;color:#444;font-size:.95rem;line-height:1.6}
+.body h4{margin:.8rem 0 .2rem;font-size:1rem;color:#222}
+mark{background:#ffe58a;padding:0 .1em;border-radius:2px}
+.empty{text-align:center;color:#888;padding:2rem}
+@media (prefers-color-scheme:dark){
+  body,header{background:#16181c;color:#eaeaea}
+  header{border-color:#333}
+  input{background:#22252b;color:#eaeaea;border-color:#444}
+  .card{border-color:#333}
+  .body p{color:#c8c8c8}.body h4{color:#eee}
+  #count{color:#aaa}.label{color:#6aa2ff}
+  mark{background:#7a6200;color:#fff}
+}
